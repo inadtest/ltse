@@ -13,12 +13,11 @@ import java.util.*;
 public class OrdersByBroker {
     private final List<Order> accepted;
     private final List<Order> rejected;
-    private final String acceptedPath = "src/test/output/accepted.csv";
-    private final String rejectedPath = "src/test/output/rejected.csv";
 
     OrdersByBroker() {
         this.accepted = new ArrayList<>();
         this.rejected = new ArrayList<>();
+
     }
 
     OrdersByBroker(List<Order> orders) {
@@ -28,15 +27,15 @@ public class OrdersByBroker {
     }
 
     void rejectRepeatedIds() {
-        Set<String> brokerSequenceIds = new HashSet<>();
+        Set<Integer> brokerSequenceIds = new HashSet<>();
         ListIterator<Order> iter = accepted.listIterator();
 
         while(iter.hasNext()) {
             Order order = iter.next();
-            if (brokerSequenceIds.contains(order.getBroker() + order.getSequenceId())) {
+            if (brokerSequenceIds.contains(order.getSequenceId())) {
                 rejected.add(order);
             } else {
-                brokerSequenceIds.add(order.getBroker() + order.getSequenceId());
+                brokerSequenceIds.add(order.getSequenceId());
             }
         }
     }
@@ -57,40 +56,42 @@ public class OrdersByBroker {
         }
         Collections.sort(rejected);
         accepted.removeAll(rejected);
-        writeOutput();
     }
 
-    void writeOutput() {
+    void writeOutput(CSVPrinter acceptedPrinter, CSVPrinter rejectedPrinter) {
         if (accepted.size() > 0) {
-            writeToFile(true, acceptedPath);
+            try {
+                writeToFile(true,  acceptedPrinter);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         if (rejected.size() > 0) {
-            writeToFile(false, rejectedPath);
-        }
-    }
-
-    void writeToFile(boolean isAccepted, String fileName) {
-        try (CSVPrinter printer = new CSVPrinter(new FileWriter(fileName), CSVFormat.EXCEL)) {
-            printer.printRecord("Time stamp","broker", "sequence id", "type", "Symbol", "Quantity", "Price", "Side");
-
-            List<Order> list;
-            if (isAccepted) {
-                list = accepted;
-            } else {
-                list = rejected;
+            try {
+                writeToFile(false,  rejectedPrinter);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            list.forEach(order -> {
-                String time = order.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                try {
-                    printer.printRecord(time, order.getBroker(), order.getSequenceId().toString(), order.getType(), order.getSymbol(), order.getQuantity().toString(), order.getPrice().toString(), order.getSide().toString());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-
-        } catch (IOException ex) {
-           throw new RuntimeException("File not Found");
         }
     }
 
+    void writeToFile(boolean isAccepted, CSVPrinter printer) throws IOException {
+        List<Order> list;
+        if (isAccepted) {
+            list = accepted;
+        } else {
+            list = rejected;
+        }
+        list.forEach(order -> {
+            String time = order.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            try {
+                printer.printRecord(time, order.getBroker(), order.getSequenceId().toString(), order.getType(), order.getSymbol(), order.getQuantity().toString(), order.getPrice().toString(), order.getSide().toString());
+                printer.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+
+    }
 }

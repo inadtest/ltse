@@ -1,16 +1,15 @@
 package in.orders;
 
 import io.vavr.control.Try;
-
 import lombok.Getter;
-import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.commons.csv.CSVFormat.EXCEL;
 
 public class OrderProcessEngine {
     @Getter
@@ -19,6 +18,10 @@ public class OrderProcessEngine {
     private final Set<String> firms;
     @Getter
     private final Set<String> tickers;
+    private final String acceptedPath = "src/test/output/accepted.csv";
+    private final String rejectedPath = "src/test/output/rejected.csv";
+    private CSVPrinter acceptedPrinter;
+    private CSVPrinter rejectedPrinter;
 
     OrderProcessEngine(String firmNames, String tickerNames, String ordersFile) {
         ordersByBroker = new HashMap<>();
@@ -26,6 +29,8 @@ public class OrderProcessEngine {
         tickers = new HashSet<>();
         getFirms(firmNames).stream().forEach(rec -> firms.add(rec));
         getTickers(tickerNames).stream().forEach(rec -> tickers.add(rec));
+
+        writeHeader();
 
         new ValidOrders(new CsvFileParser(ordersFile).parse().stream().map(record -> new Order(record, firms, tickers))).getOrders()
                 .forEach((key, value) -> ordersByBroker.put(key, new OrdersByBroker(value)));
@@ -47,6 +52,30 @@ public class OrderProcessEngine {
         ordersByBroker.forEach((key, value) -> {
             value.rejectRepeatedIds();
             value.rejectBasedOntime();
+            value.writeOutput(acceptedPrinter, rejectedPrinter);
         });
+
+        try {
+            acceptedPrinter.close();
+            rejectedPrinter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void writeHeader() {
+        try {
+
+            acceptedPrinter = new CSVPrinter(new FileWriter(acceptedPath), CSVFormat.EXCEL);
+            acceptedPrinter.printRecord("Time stamp", "broker", "sequence id", "type", "Symbol", "Quantity", "Price", "Side");
+            acceptedPrinter.flush();
+
+            rejectedPrinter = new CSVPrinter(new FileWriter(rejectedPath), CSVFormat.EXCEL);
+            rejectedPrinter.printRecord("Time stamp", "broker", "sequence id", "type", "Symbol", "Quantity", "Price", "Side");
+            rejectedPrinter.flush();
+
+        } catch (IOException e) {
+            throw new RuntimeException("File not Found");
+        }
     }
 }

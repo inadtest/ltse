@@ -1,0 +1,11 @@
+Time stamp,broker,sequence id,type,Symbol,Quantity,Price,Side
+2017-05-10 10:11:20,Fidelity,18,K,BRIC,300,30.705,Sell
+2017-05-10 10:19:40,Fidelity,23,2,BARK,100,1.19,Sell
+2017-05-10 10:34:01,Fidelity,32,2,CARD,200,6.855,Sell
+2017-05-10 10:34:02,National Planning Corporation,33,2,YLLW,100000,11.1,Sell
+2017-05-10 10:34:02,Charles Schwab,33,2,LGHT,100,140.05,Buy
+2017-05-10 10:34:02,Raymond James Financial,33,K,LGHT,800,98.765,Sell
+2017-05-10 10:34:02,AXA Advisors,33,K,HOOF,200,76.48,Sell
+2017-05-10 10:34:02,TD Ameritrade,33,2,BARK,400,88.3,Buy
+2017-05-10 10:33:52,LPL Financial,33,2,HOOF,500,39.13,Sell
+2017-05-10 10:33:56,LPL Financial,34,2,YLLW,600,11.11,Sell
